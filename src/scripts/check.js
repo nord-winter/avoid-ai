@@ -8,16 +8,72 @@ const path = require("path");
 
 // All target chars as \uXXXX so this file passes the PreToolUse hook.
 const CHECKS = [
-  { code: "\u2014", name: "EM DASH",               severity: "P1", visible: true  },
-  { code: "\u00A0", name: "NON-BREAKING SPACE",     severity: "P0", visible: false },
-  { code: "\u202F", name: "NARROW NO-BREAK SPACE",  severity: "P0", visible: false },
-  { code: "\u2007", name: "FIGURE SPACE",           severity: "P0", visible: false },
-  { code: "\u200B", name: "ZERO-WIDTH SPACE",       severity: "P0", visible: false },
-  { code: "\u200C", name: "ZERO-WIDTH NON-JOINER",  severity: "P0", visible: false },
-  { code: "\u200D", name: "ZERO-WIDTH JOINER",      severity: "P0", visible: false },
-  { code: "\uFEFF", name: "BOM / ZERO-WIDTH NBSP",  severity: "P0", visible: false },
-  { code: "\u00AD", name: "SOFT HYPHEN",            severity: "P1", visible: false },
+  // Invisible -- P0
+  { code: "\u200B", name: "ZERO-WIDTH SPACE",           severity: "P0", visible: false },
+  { code: "\u200C", name: "ZERO-WIDTH NON-JOINER",      severity: "P0", visible: false },
+  { code: "\u200D", name: "ZERO-WIDTH JOINER",          severity: "P0", visible: false },
+  { code: "\uFEFF", name: "BOM / ZERO-WIDTH NBSP",      severity: "P0", visible: false },
+  { code: "\u2060", name: "WORD JOINER",                severity: "P0", visible: false },
+  { code: "\u180E", name: "MONGOLIAN VOWEL SEPARATOR",  severity: "P0", visible: false },
+  { code: "\u2061", name: "FUNCTION APPLICATION",       severity: "P0", visible: false },
+  { code: "\u2062", name: "INVISIBLE TIMES",            severity: "P0", visible: false },
+  { code: "\u2064", name: "INVISIBLE PLUS",             severity: "P0", visible: false },
+  { code: "\u00A0", name: "NON-BREAKING SPACE",         severity: "P0", visible: false },
+  { code: "\u202F", name: "NARROW NO-BREAK SPACE",      severity: "P0", visible: false },
+  { code: "\u2007", name: "FIGURE SPACE",               severity: "P0", visible: false },
+  { code: "\u00AD", name: "SOFT HYPHEN",                severity: "P1", visible: false },
+  // Typographic substitutes -- P1
+  { code: "\u2014", name: "EM DASH",                    severity: "P1", visible: true  },
+  { code: "\u2013", name: "EN DASH",                    severity: "P1", visible: true  },
+  { code: "\u2212", name: "MINUS SIGN",                 severity: "P1", visible: true  },
+  { code: "\u2026", name: "ELLIPSIS",                   severity: "P1", visible: true  },
+  { code: "\u2019", name: "TYPOGRAPHIC APOSTROPHE",     severity: "P1", visible: true  },
+  { code: "\u201C", name: "LEFT DOUBLE QUOTATION MARK", severity: "P1", visible: true  },
+  { code: "\u201D", name: "RIGHT DOUBLE QUOTATION MARK",severity: "P1", visible: true  },
 ];
+
+
+// Entropy scoring: detects structural uniformity typical of AI text
+function entropyScore(src) {
+  const paras = src.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+  const sentences = src.match(/[^.!?]+[.!?]+/g) || [];
+
+  function variance(arr) {
+    if (arr.length < 2) return 0;
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+    return arr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / arr.length;
+  }
+
+  const paraLengths = paras.map(p => p.length);
+  const sentLengths = sentences.map(s => s.trim().length);
+
+  const paraVar   = variance(paraLengths);
+  const sentVar   = variance(sentLengths);
+
+  // Common AI connectors
+  const connectors = ["moreover", "furthermore", "additionally", "however",
+                      "therefore", "thus", "hence", "consequently",
+                      "in conclusion", "in summary", "to summarize",
+                      "it is worth noting", "it should be noted"];
+  const lower = src.toLowerCase();
+  const connectorCount = connectors.reduce((n, c) => n + (lower.split(c).length - 1), 0);
+
+  return { paraVar, sentVar, connectorCount, paraCount: paras.length, sentCount: sentences.length };
+}
+
+function entropyFlags(score) {
+  const flags = [];
+  if (score.paraCount >= 3 && score.paraVar < 200) {
+    flags.push("[ENTROPY] Uniform paragraph lengths (variance " + score.paraVar.toFixed(0) + "). Vary structure.");
+  }
+  if (score.sentCount >= 5 && score.sentVar < 100) {
+    flags.push("[ENTROPY] Uniform sentence lengths (variance " + score.sentVar.toFixed(0) + "). Mix short and long.");
+  }
+  if (score.connectorCount >= 3) {
+    flags.push("[ENTROPY] " + score.connectorCount + " AI connector(s) found (moreover/furthermore/etc).");
+  }
+  return flags;
+}
 
 const filePath = process.argv[2];
 const fixMode  = process.argv.includes("--fix");
@@ -38,6 +94,71 @@ try {
 const lines    = text.split("\n");
 const findings = [];
 
+// Homoglyph detection: Cyrillic/Greek chars visually identical to Latin
+const HOMOGLYPHS = {
+  // Cyrillic
+  "\u0410": "A", "\u0430": "a",
+  "\u0412": "B",
+  "\u0421": "C", "\u0441": "c",
+  "\u0415": "E", "\u0435": "e",
+  "\u041D": "H",
+  "\u0406": "I", "\u0456": "i",
+  "\u0408": "J",
+  "\u041A": "K",
+  "\u041C": "M",
+  "\u041E": "O", "\u043E": "o",
+  "\u0420": "P", "\u0440": "p",
+  "\u0455": "s",
+  "\u0422": "T",
+  "\u0425": "X", "\u0445": "x",
+  "\u0443": "y",
+  "\u04CF": "l",
+  // Greek
+  "\u0391": "A", "\u03B1": "a",
+  "\u0392": "B",
+  "\u0395": "E", "\u03B5": "e",
+  "\u039A": "K",
+  "\u039C": "M",
+  "\u039D": "N", "\u03BD": "v",
+  "\u039F": "O", "\u03BF": "o",
+  "\u03A1": "P", "\u03C1": "p",
+  "\u03A4": "T",
+  "\u03A5": "Y", "\u03C5": "u",
+  "\u0396": "Z",
+  "\u03B9": "i",
+};
+
+// Skip homoglyph check when text is predominantly Cyrillic/non-Latin.
+// Rationale: a Cyrillic "a" in an English word is a strong AI signal.
+// But in Russian text, all Cyrillic is legitimate -- flagging it is a false positive.
+// TODO (v2): per-word language detection so mixed-language docs get correct treatment.
+// See docs/roadmap.md: "Language-aware filtering".
+const cyrillicCount  = (text.match(/[\u0400-\u04FF]/g) || []).length;
+const latinCount     = (text.match(/[a-zA-Z]/g) || []).length;
+const skipHomoglyphs = cyrillicCount > latinCount;
+if (skipHomoglyphs) {
+  process.stderr.write("note: homoglyph check skipped (Cyrillic-primary text)\n");
+}
+
+if (!skipHomoglyphs) {
+  lines.forEach((line, lineIdx) => {
+    for (const [cyChar, latinLook] of Object.entries(HOMOGLYPHS)) {
+      let col = 0;
+      while ((col = line.indexOf(cyChar, col)) !== -1) {
+        findings.push({
+          line: lineIdx + 1,
+          col:  col + 1,
+          severity: "P0",
+          name:  "HOMOGLYPH (looks like '" + latinLook + "' U+" + cyChar.codePointAt(0).toString(16).toUpperCase().padStart(4,"0") + ")",
+          code:  cyChar,
+          context: line.slice(Math.max(0, col - 20), col + 21),
+        });
+        col++;
+      }
+    }
+  });
+}
+
 lines.forEach((line, lineIdx) => {
   CHECKS.forEach(({ code, name, severity }) => {
     let col = 0;
@@ -55,8 +176,15 @@ lines.forEach((line, lineIdx) => {
   });
 });
 
-if (findings.length === 0) {
+// Run entropy check regardless of Unicode findings
+const eScore = entropyScore(text);
+const eFlags = entropyFlags(eScore);
+
+if (findings.length === 0 && eFlags.length === 0) {
   console.log("OK: no forbidden characters in", path.basename(filePath));
+  if (process.argv.includes("--verbose")) {
+    console.log("Entropy: para variance=" + eScore.paraVar.toFixed(0) + " sent variance=" + eScore.sentVar.toFixed(0) + " connectors=" + eScore.connectorCount);
+  }
   process.exit(0);
 }
 
@@ -81,21 +209,44 @@ findings.forEach(f => {
   console.log("       ..." + sanitizeCtx(f.context) + "...");
 });
 
-console.log("\nSummary: " + p0.length + " P0 (invisible Unicode)  " + p1.length + " P1 (em dash / soft hyphen)");
+if (findings.length > 0) {
+  console.log("\nSummary: " + p0.length + " P0 (invisible / homoglyphs)  " + p1.length + " P1 (typographic substitutes)");
+}
+
+if (eFlags.length > 0) {
+  console.log("\nEntropy warnings:");
+  eFlags.forEach(f => console.log("  " + f));
+} else if (process.argv.includes("--verbose")) {
+  console.log("\nEntropy: para variance=" + eScore.paraVar.toFixed(0) + " sent variance=" + eScore.sentVar.toFixed(0) + " connectors=" + eScore.connectorCount);
+}
 
 if (fixMode) {
+  // Markers keyed by codepoint (no literal special chars in source)
+  const MARKERS = {
+    0x2014: "[EM-DASH: FIX MANUALLY]",
+    0x2013: "[EN-DASH: FIX]",
+    0x2212: "[MINUS-SIGN: FIX]",
+    0x2026: "[ELLIPSIS: use ...]",
+    0x2019: "'",
+    0x201C: "\"",
+    0x201D: "\"",
+  };
   let fixed = text;
   CHECKS.forEach(({ code, visible }) => {
     if (!visible) {
       fixed = fixed.split(code).join("");
-    } else if (code === "\u2014") {
-      fixed = fixed.split(code).join("[EM-DASH: FIX MANUALLY]");
+    } else {
+      const marker = MARKERS[code.codePointAt(0)];
+      if (marker) fixed = fixed.split(code).join(marker);
     }
   });
+  for (const [cyChar, latinLook] of Object.entries(HOMOGLYPHS)) {
+    fixed = fixed.split(cyChar).join("[HOMOGLYPH-" + latinLook.toUpperCase() + ": FIX]");
+  }
   const outPath = filePath.replace(/(\.[^.]+)$/, ".fixed$1");
   fs.writeFileSync(outPath, fixed, "utf8");
   console.log("\nFixed file: " + outPath);
-  console.log("Invisible chars stripped. Em dashes marked [EM-DASH: FIX MANUALLY].");
+  console.log("Invisible chars stripped. Visible P1 chars marked. Homoglyphs flagged.");
 }
 
 process.exit(findings.length > 0 ? 1 : 0);

@@ -133,4 +133,27 @@ function readFlag(flagPath) {
   } catch (e) { return null; }
 }
 
-module.exports = { getDefaultMode, getConfigDir, getConfigPath, VALID_MODES, safeWriteFlag, readFlag };
+
+// Single source of truth for per-turn reinforcement text.
+// Used by both activate.js (SessionStart) and mode-tracker.js (UserPromptSubmit).
+function getCompactRules(mode) {
+  const strict = mode === 'strict';
+  return (
+    'AVOID-AI MODE ACTIVE (' + mode + '). Apply rules to YOUR OWN response before outputting.\n' +
+    'VOCAB: No Tier-1 words: delve, leverage, robust, seamless, holistic, pivotal, meticulous, ' +
+    'utilize, actionable, impactful, paradigm, embark, showcase, intricate, ever-evolving, ' +
+    'cutting-edge, comprehensive, game-changer, deep dive, unpack, tapestry, realm, best practices.\n' +
+    'FORMAT: No em dash (U+2014) or en dash (U+2013). No emoji in headers/bullets. ' +
+    'No bold overuse. No bullets where prose works. No backticks on non-code words.\n' +
+    'PATTERNS: No "it\'s worth noting", "let\'s explore", "in today\'s X", ' +
+    '"Great question!", stacked hedges ("could potentially"), "Let\'s" openers, ' +
+    'generic closers ("the future looks bright").\n' +
+    (strict
+      ? 'STRICT: also fix uniform para/sentence length, transition boilerplate (Moreover/Furthermore/' +
+        'Additionally), copula avoidance (serves as/boasts/features), synonym cycling, compulsive rule of three.\n'
+      : '') +
+    'Switch: /avoid-ai on|off|strict.'
+  );
+}
+
+module.exports = { getDefaultMode, getConfigDir, getConfigPath, VALID_MODES, safeWriteFlag, readFlag, getCompactRules };

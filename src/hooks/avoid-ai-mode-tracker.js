@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { getDefaultMode, safeWriteFlag, readFlag, VALID_MODES } = require('./avoid-ai-config');
+const { getDefaultMode, safeWriteFlag, readFlag, VALID_MODES, getCompactRules } = require('./avoid-ai-config');
 
 const claudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 const flagPath = path.join(claudeDir, '.avoid-ai-active');
@@ -65,18 +65,7 @@ process.stdin.on('end', () => {
       process.stdout.write(JSON.stringify({
         hookSpecificOutput: {
           hookEventName: 'UserPromptSubmit',
-          additionalContext:
-            'AVOID-AI MODE ACTIVE (' + activeMode + '). ' +
-            'Apply avoid-ai-writing rules to YOUR OWN response before outputting. ' +
-            'VOCABULARY: No Tier-1 words (delve/leverage/robust/seamless/holistic/pivotal/meticulous/utilize/actionable/impactful/paradigm/embark/showcase/intricate/ever-evolving). ' +
-            'FORMATTING: No em dashes (use commas or periods instead). No emoji in bullets/headers. No backticks on non-code words. No bold overuse. No bullet lists where prose works. ' +
-            'PATTERNS: No "it\'s worth noting", "let\'s explore", "in today\'s X", chatbot artifacts ("Great question!"). ' +
-            'No stacked hedges ("could potentially"). No generic closers ("the future looks bright"). No "Let\'s" openers. ' +
-            (activeMode === 'strict'
-              ? 'STRICT: also fix uniform paragraph/sentence length, transition phrases (Moreover/Furthermore/Additionally), ' +
-                'copula avoidance (serves as/boasts/features), synonym cycling, compulsive rule of three. '
-              : '') +
-            'Switch: "/avoid-ai on|off|strict".'
+          additionalContext: getCompactRules(activeMode)
         }
       }));
     }

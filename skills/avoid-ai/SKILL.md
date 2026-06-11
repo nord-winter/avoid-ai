@@ -43,7 +43,9 @@ Current level: **on** (default). Switch: `/avoid-ai on|off|strict`.
 ### P1 -- Obvious AI smell (always fix)
 
 **Formatting -- never do:**
-- **Em dash (U+2014)**: Absolute zero. Replace with whatever fits the sentence: comma, colon, period, parentheses, or two sentences. Do not substitute `--` as a default. That's still a mechanical pattern. The goal is variation, not character swapping.
+- **Em dash (U+2014) and en dash (U+2013)**: Absolute zero. Replace with whatever fits: comma, colon, period, hyphen, parentheses, or two sentences. Do not substitute `--` as default -- that's still mechanical. Goal is variation, not character swapping.
+- **Typographic apostrophe (U+2019), curly quotes (U+201C, U+201D)**: Use straight versions instead.
+- **Ellipsis character (U+2026)**: Type three separate dots. Single-char ellipsis is an AI typography tell.
 - **Bold overuse**: One bolded phrase per major section at most, or none. If something's important enough to bold, restructure the sentence to lead with it instead.
 - **Emoji in bullet points or headers**: No 💡, 🚀, 📌 at the start of bullets or section headers. Exception: social posts may use one emoji sparingly at end of line.
 - **Backtick/monospace for non-code**: Don't use `backticks` or monospace for ordinary words, product names, or concepts that aren't actual code, commands, or file paths.
@@ -51,9 +53,12 @@ Current level: **on** (default). Switch: `/avoid-ai on|off|strict`.
 
 **Invisible Unicode -- strip immediately:**
 - **Non-breaking spaces** (U+00A0, U+202F, U+2007): AI models insert these in place of regular spaces, visible only in plain-text editors. They cause unexpected line-break behavior and are a near-definitive AI fingerprint in plain-text contexts.
-- **Zero-width characters** (U+200B zero-width space, U+200C zero-width non-joiner, U+200D zero-width joiner, U+FEFF BOM): Used as invisible watermarks by some AI systems (notably GPT o3/o4-mini) to encode authorship. Strip on sight -- a reader can't see them but a detector can.
+- **Zero-width characters** (U+200B zero-width space, U+200C zero-width non-joiner, U+200D zero-width joiner, U+FEFF BOM, U+2060 word joiner): Used as invisible watermarks by some AI systems (notably GPT o3/o4-mini) to encode authorship. Strip on sight.
 - **Soft hyphens** (U+00AD): Invisible unless the word wraps. AI uses these more than human writers. Flag in plain-text output.
-- **Fix**: Run a Unicode strip pass. Replace non-breaking spaces with regular spaces. Remove zero-width characters entirely. If the text was copy-pasted from a chat UI, assume hidden characters are present until proven otherwise.
+- **Invisible math operators** (U+2061 function application, U+2062 invisible times, U+2064 invisible plus): Near-zero legitimate use outside math markup. Flag immediately.
+- **Mongolian vowel separator** (U+180E): Zero legitimate use in English or Russian text. Guaranteed machine origin.
+- **Homoglyphs**: Cyrillic or Greek characters (А, В, С, Е, О, Р, Т, Х, о, р, с, х, у, etc.) substituted for visually identical Latin letters. Undetectable by eye, detectable by codepoint. Run `node src/scripts/check.js` to scan.
+- **Fix**: Run a Unicode strip pass. Replace non-breaking spaces with regular spaces. Remove zero-width characters entirely. If text was copy-pasted from a chat UI, assume hidden characters are present until proven otherwise.
 
 **Tier-1 words -- never use:**
 

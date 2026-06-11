@@ -7,6 +7,6 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "echo \"No tests yet\""
+    "test": "node tests/verify.js"
   }
 }

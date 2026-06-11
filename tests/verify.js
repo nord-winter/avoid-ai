@@ -197,6 +197,71 @@ test("readFlag returns null for missing file", () => {
   assert(readFlag(fp) === null, "expected null for missing flag");
 });
 
+
+test("en dash -> P1 finding", () => {
+  const f = tmpFile("endash.md", "pages 10–15\n");
+  const r = runCheck(f);
+  assert(r.status === 1, "expected exit 1");
+  assert(r.stdout.includes("EN DASH"), "expected EN DASH");
+});
+
+test("ellipsis char -> P1 finding", () => {
+  const f = tmpFile("ellipsis.md", "wait…\n");
+  const r = runCheck(f);
+  assert(r.stdout.includes("ELLIPSIS"), "expected ELLIPSIS");
+});
+
+test("typographic apostrophe -> P1 finding", () => {
+  const f = tmpFile("apos.md", "don’t\n");
+  const r = runCheck(f);
+  assert(r.stdout.includes("APOSTROPHE"), "expected APOSTROPHE");
+});
+
+test("cyrillic homoglyph in latin text -> P0 finding", () => {
+  const f = tmpFile("homo.md", "heоllo\n");
+  const r = runCheck(f);
+  assert(r.status === 1, "expected exit 1");
+  assert(r.stdout.includes("HOMOGLYPH"), "expected HOMOGLYPH");
+  assert(r.stdout.includes("P0"), "expected P0 severity");
+});
+
+test("word joiner -> P0 finding", () => {
+  const f = tmpFile("wj.md", "word⁠joiner\n");
+  const r = runCheck(f);
+  assert(r.stdout.includes("WORD JOINER"), "expected WORD JOINER");
+});
+
+// ── entropy tests ────────────────────────────────────────────────────────
+
+console.log("\nentropy");
+
+test("uniform paragraphs -> ENTROPY warning", () => {
+  // 4 paragraphs of nearly identical length
+  const body = [
+    "This is paragraph one with some content here to fill it out nicely.",
+    "This is paragraph two with some content here to fill it out nicely.",
+    "This is paragraph three with content here to fill it out just right.",
+    "This is paragraph four with some content here to fill it out nicely.",
+  ].join("\n\n");
+  const f = tmpFile("entropy-para.md", body);
+  const r = runCheck(f);
+  assert(r.stdout.includes("ENTROPY"), "expected ENTROPY warning for uniform paragraphs: " + r.stdout);
+});
+
+test("high connector count -> ENTROPY warning", () => {
+  const body = "Moreover this is true. Furthermore it holds. Additionally we note. However it is complex. Therefore we conclude.";
+  const f = tmpFile("entropy-connectors.md", body);
+  const r = runCheck(f);
+  assert(r.stdout.includes("ENTROPY"), "expected ENTROPY warning for connectors: " + r.stdout);
+});
+
+test("varied text -> no ENTROPY warning", () => {
+  const body = "Short.\n\nThis paragraph is considerably longer and covers much more ground than the first one does, with multiple clauses and ideas.\n\nMedium length paragraph here with a couple of sentences. It rounds things out.";
+  const f = tmpFile("entropy-ok.md", body);
+  const r = runCheck(f);
+  assert(!r.stdout.includes("ENTROPY"), "unexpected ENTROPY warning for varied text");
+});
+
 // ── cleanup ───────────────────────────────────────────────────────────────
 
 fs.rmSync(tmpDir, { recursive: true, force: true });

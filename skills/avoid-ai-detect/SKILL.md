@@ -31,10 +31,13 @@ Audit the provided text for AI writing patterns. Do not apply to Claude's own re
 - AI-tool URL parameters (utm_source=chatgpt.com, utm_source=claude.ai)
 - Unfilled placeholders ([Your Name], [INSERT SOURCE URL], 2025-XX-XX)
 - **Invisible Unicode characters** -- near-definitive AI fingerprints:
-  - Non-breaking spaces (U+00A0, U+202F, U+2007) substituted for regular spaces
-  - Zero-width characters (U+200B, U+200C, U+200D, U+FEFF) used as invisible watermarks
-  - Soft hyphens (U+00AD) in unexpected positions
-  - Detection: paste into a plain-text editor that shows Unicode, or run `cat -A` / hex dump. Fix: strip all non-standard Unicode spacing and zero-width chars, replace with regular spaces or nothing.
+  - Zero-width chars: U+200B (ZWSP), U+200C (ZWNJ), U+200D (ZWJ), U+FEFF (BOM), U+2060 (word joiner)
+  - Non-breaking spaces: U+00A0, U+202F (narrow NBSP), U+2007 (figure space)
+  - Soft hyphen: U+00AD -- invisible unless the word wraps
+  - Invisible math operators: U+2061 (function application), U+2062 (invisible times), U+2064 (invisible plus)
+  - Mongolian vowel separator: U+180E -- zero legitimate use in English or Russian
+  - Detection: run `node src/scripts/check.js file.md`, or `cat -A` / hex dump. Fix: strip all non-standard Unicode spacing and zero-width chars.
+- **Homoglyphs** -- Cyrillic or Greek letters substituted for visually identical Latin ones. Codepoints differ, glyphs look identical. Flag as P0. Run `node src/scripts/check.js` to detect.
 
 ### P1 -- Obvious AI smell (flag before publishing)
 - Tier-1 words: delve, leverage, robust, seamless, meticulous, utilize, holistic, actionable, impactful, pivotal, paradigm, embark, testament to, game-changer, showcase, intricate, ever-evolving, cutting-edge, comprehensive
@@ -44,7 +47,9 @@ Audit the provided text for AI writing patterns. Do not apply to Claude's own re
 - Stacked hedges ("could potentially", "may eventually")
 - Formulaic openings ("In the rapidly evolving world of...")
 - Bold overuse (more than one bolded phrase per major section)
-- Em dash (U+2014): absolute zero. In prose flag as P1, in markup/labels also flag. No exceptions.
+- Em dash (U+2014) and en dash (U+2013): absolute zero. Flag in prose and markup. No exceptions.
+- Ellipsis character (U+2026): flag as P1. Should be three separate dots.
+- Typographic apostrophe (U+2019) and curly quotes (U+201C, U+201D): flag as P1. Should be straight ASCII versions.
 - Social endorsement closers ("This one is worth your time:", "Thank me later")
 - Bullet lists of bare noun phrases (5+ short adj+noun items, no verbs)
 - Reasoning chain artifacts ("Let me think step by step", "Breaking this down")
