@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+// avoid-ai -- shared configuration resolver
+//
+// Resolution order for default mode:
+//   1. AVOID_AI_DEFAULT_MODE environment variable
+//   2. Config file defaultMode field:
+//      - $XDG_CONFIG_HOME/avoid-ai/config.json (any platform, if set)
+//      - ~/.config/avoid-ai/config.json (macOS / Linux fallback)
+//      - %APPDATA%\avoid-ai\config.json (Windows fallback)
+//   3. 'on'
+
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+// Modes:
+//   off    -- disabled, no filtering
+//   on     -- P0+P1 patterns only (credibility killers + obvious AI smell)
+//   strict -- full audit: P0+P1+P2 (all tiers)
+const VALID_MODES = ['off', 'on', 'strict'];
+
+function getConfigDir() {
+  if (process.env.XDG_CONFIG_HOME) {
+    return path.join(process.env.XDG_CONFIG_HOME, 'avoid-ai');
+  }
+  if (process.platform === 'win32') {
+    return path.join(
+      process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'),
+      'avoid-ai'
+    );
+  }
+  return path.join(os.homedir(), '.config', 'avoid-ai');
+}
+
+function getConfigPath() {
+  return path.join(getConfigDir(), 'config.json');
+}
+
+function getDefaultMode() {
+  // 1. Environment variable
+  const envMode = process.env.AVOID_AI_DEFAULT_MODE;
+  if (envMode && VALID_MODES.includes(envMode.toLowerCase())) {
+    return envMode.toLowerCase();
+  }
+
+  // 2. Config file
+  try {
+    const config = JSON.parse(fs.readFileSync(getConfigPath(), 'utf8'));
+    if (config.defaultMode && VALID_MODES.includes(config.defaultMode.toLowerCase())) {
+      return config.defaultMode.toLowerCase();
+    }
+  } catch (e) {}
+
+  // 3. Default
+  return 'on';
+}
+
+// Symlink-safe flag write (mirrors caveman pattern).
+function safeWriteFlag(flagPath, content) {
+  const debug = process.env.AVOID_AI_DEBUG === '1';
+  try {
+    const flagDir = path.dirname(flagPath);
+    fs.mkdirSync(flagDir, { recursive: true });
+
+    let realFlagDir;
+    try {
+      const lstat = fs.lstatSync(flagDir);
+      if (lstat.isSymbolicLink()) {
+        realFlagDir = fs.realpathSync(flagDir);
+        const realStat = fs.statSync(realFlagDir);
+        if (!realStat.isDirectory()) return;
+        if (typeof process.getuid === 'function') {
+          if (realStat.uid !== process.getuid()) return;
+        } else {
+          const home = os.homedir();
+          const normalizedReal = path.resolve(realFlagDir);
+          const normalizedHome = path.resolve(home);
+          if (!normalizedReal.toLowerCase().startsWith(normalizedHome.toLowerCase() + path.sep) &&
+              normalizedReal.toLowerCase() !== normalizedHome.toLowerCase()) return;
+        }
+      } else {
+        realFlagDir = flagDir;
+      }
+    } catch (e) { return; }
+
+    const realFlagPath = path.join(realFlagDir, path.basename(flagPath));
+    try {
+      if (fs.lstatSync(realFlagPath).isSymbolicLink()) return;
+    } catch (e) {
+      if (e.code !== 'ENOENT') return;
+    }
+
+    const tempPath = path.join(realFlagDir, `.avoid-ai-active.${process.pid}.${Date.now()}`);
+    const O_NOFOLLOW = typeof fs.constants.O_NOFOLLOW === 'number' ? fs.constants.O_NOFOLLOW : 0;
+    const flags = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | O_NOFOLLOW;
+    let fd;
+    try {
+      fd = fs.openSync(tempPath, flags, 0o600);
+      fs.writeSync(fd, String(content));
+      try { fs.fchmodSync(fd, 0o600); } catch (e) {}
+    } finally {
+      if (fd !== undefined) fs.closeSync(fd);
+    }
+    fs.renameSync(tempPath, realFlagPath);
+  } catch (e) {}
+}
+
+// Symlink-safe, size-capped, whitelist-validated flag read.
+const MAX_FLAG_BYTES = 32;
+
+function readFlag(flagPath) {
+  try {
+    let st;
+    try { st = fs.lstatSync(flagPath); } catch (e) { return null; }
+    if (st.isSymbolicLink() || !st.isFile()) return null;
+    if (st.size > MAX_FLAG_BYTES) return null;
+
+    const O_NOFOLLOW = typeof fs.constants.O_NOFOLLOW === 'number' ? fs.constants.O_NOFOLLOW : 0;
+    const flags = fs.constants.O_RDONLY | O_NOFOLLOW;
+    let fd, out;
+    try {
+      fd = fs.openSync(flagPath, flags);
+      const buf = Buffer.alloc(MAX_FLAG_BYTES);
+      const n = fs.readSync(fd, buf, 0, MAX_FLAG_BYTES, 0);
+      out = buf.slice(0, n).toString('utf8');
+    } finally {
+      if (fd !== undefined) fs.closeSync(fd);
+    }
+
+    const raw = out.trim().toLowerCase();
+    if (!VALID_MODES.includes(raw)) return null;
+    return raw;
+  } catch (e) { return null; }
+}
+
+module.exports = { getDefaultMode, getConfigDir, getConfigPath, VALID_MODES, safeWriteFlag, readFlag };

@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# avoid-ai runtime flag (written to ~/.claude/, not here, but just in case)
+.avoid-ai-active
+*.avoid-ai-active.*
+
+# test artifacts
+**/*.fixed.md
+
+# editor
+.vscode/
+.idea/

@@ -1,0 +1,48 @@
+{
+  "name": "avoid-ai",
+  "description": "Persistent mode that strips AI-isms from Claude's own responses. Active every session. No more 'delve', 'robust', 'leverage', or 'it's worth noting that'.",
+  "version": "1.0.0",
+  "author": {
+    "name": "void-ai"
+  },
+  "license": "MIT",
+  "keywords": ["writing", "editing", "ai-detection", "humanize", "voice"],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/avoid-ai-activate.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading avoid-ai mode..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/avoid-ai-mode-tracker.js\"",
+            "timeout": 5,
+            "statusMessage": "Tracking avoid-ai mode..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/avoid-ai-prewrite.js\"",
+            "timeout": 5,
+            "statusMessage": "Checking for em dashes..."
+          }
+        ]
+      }
+    ]
+  }
+}

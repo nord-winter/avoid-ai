@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "avoid-ai",
+  "description": "Persistent mode that strips AI-isms from Claude's own responses. Active every session. No more 'delve', 'robust', 'leverage', or empty closers.",
+  "owner": {
+    "name": "void-ai"
+  },
+  "plugins": [
+    {
+      "name": "avoid-ai",
+      "description": "Claude self-audits every response. No Tier-1 words, no chatbot artifacts, no stacked hedges.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

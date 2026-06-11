@@ -1,0 +1,12 @@
+{
+  "name": "avoid-ai",
+  "version": "1.0.0",
+  "description": "Persistent mode that strips AI-isms from Claude's own responses",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  }
+}
