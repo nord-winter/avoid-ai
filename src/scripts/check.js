@@ -33,10 +33,25 @@ const CHECKS = [
 ];
 
 
+// Strip markdown non-prose blocks before entropy scoring.
+// Code fences, tables, and blockquotes can contain any vocabulary by design --
+// counting connectors or measuring length inside them produces false positives.
+function stripMarkdownBlocks(src) {
+  return src
+    .replace(/^```[\s\S]*?^```/gm, "")       // fenced code blocks
+    .replace(/^~~~[\s\S]*?^~~~/gm, "")       // tilde code blocks
+    .replace(/^[ \t]*\|.*\|[ \t]*$/gm, "")  // table rows (| col | col |)
+    .replace(/^[ \t]*>.*$/gm, "")            // blockquotes
+    .replace(/^[ \t]{4,}.+$/gm, "")          // indented code (4+ spaces)
+    .replace(/`[^`]+`/g, "");               // inline code
+}
+
 // Entropy scoring: detects structural uniformity typical of AI text
 function entropyScore(src) {
-  const paras = src.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 0);
-  const sentences = src.match(/[^.!?]+[.!?]+/g) || [];
+  const prose = stripMarkdownBlocks(src);
+
+  const paras = prose.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+  const sentences = prose.match(/[^.!?]+[.!?]+/g) || [];
 
   function variance(arr) {
     if (arr.length < 2) return 0;
@@ -55,7 +70,7 @@ function entropyScore(src) {
                       "therefore", "thus", "hence", "consequently",
                       "in conclusion", "in summary", "to summarize",
                       "it is worth noting", "it should be noted"];
-  const lower = src.toLowerCase();
+  const lower = prose.toLowerCase();
   const connectorCount = connectors.reduce((n, c) => n + (lower.split(c).length - 1), 0);
 
   return { paraVar, sentVar, connectorCount, paraCount: paras.length, sentCount: sentences.length };

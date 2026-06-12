@@ -1,16 +1,39 @@
 # avoid-ai
 
-Claude Code plugin that strips AI-isms from Claude's own responses. Active on every session. No config needed.
+Claude Code plugin that applies a self-editing pass to every Claude response. Removes vocabulary, formatting, and structural patterns statistically associated with AI-generated text. Active on every session. No config needed.
 
-## What it does
+## Features
 
-Claude has a vocabulary problem. Left unchecked, it uses "delve", "leverage", "robust", "seamless", "it's worth noting that", em dashes everywhere, and closes every response with "the future looks bright". This plugin fixes that.
+**Response quality enforcement** -- three hooks run on every session automatically. At startup, the full ruleset is injected into context. On every user message, a compact rule reminder keeps the rules in model attention. Before any file write, the content is checked for forbidden characters and blocked if violations are found.
 
-Three enforcement layers:
+**On-demand text audit** -- `/avoid-ai detect` audits any text for AI patterns with P0/P1/P2 severity, line-level findings, and an optional rewrite. Works on English and Russian text.
 
-- **SessionStart hook** injects the full ruleset into context at session start
-- **UserPromptSubmit hook** reinforces rules on every turn so they don't drift
-- **PreToolUse hook** blocks file writes that contain em dashes, forcing Claude to fix before saving
+**Personal voice profile** -- `/avoid-ai-voice build` runs an 8-question interview and produces an `about-me.md` profile. Claude reads it before responding, matching your vocabulary, sentence rhythm, and tone instead of defaulting to generic professional style.
+
+**Unicode and encoding scanner** -- standalone CLI that works outside Claude Code. Reads files in UTF-8, resolves codepoints correctly (including supplementary-plane characters such as emoji), and reports findings by exact line and codepoint column.
+
+| Category | What it catches |
+|---|---|
+| Invisible chars (P0) | U+200B zero-width space, U+FEFF BOM, U+00A0 non-breaking space, U+00AD soft hyphen, and 6 others |
+| Typographic substitutes (P1) | U+2014 em dash, U+2013 en dash, U+2026 ellipsis, U+2019 typographic apostrophe, smart quotes |
+| Homoglyphs (P0) | Cyrillic and Greek chars visually identical to Latin (30+ pairs); auto-skipped in Cyrillic-primary text |
+| Structural entropy | Uniform paragraph/sentence length, AI connector frequency (moreover/furthermore/additionally/...) |
+
+Example output:
+
+```
+[P1] line 1:24  U+2014 EM DASH
+       ...example [EMDASH] showing what the scanner finds...
+[P0] line 2:9   U+00A0 NON-BREAKING SPACE
+       ...It has a[_]non-breaking space...
+[P0] line 2:35  U+200B ZERO-WIDTH SPACE
+       ...and a [?]zero-width space...
+
+Summary: 2 P0 (invisible / homoglyphs)  1 P1 (typographic substitutes)
+Entropy: connectors=2
+```
+
+`--fix` creates a clean copy: invisible characters stripped, typographic substitutes replaced with keyboard equivalents (em dash becomes ` - `, ellipsis becomes `...`, smart quotes become straight quotes).
 
 ## Install
 
@@ -66,7 +89,15 @@ node src/scripts/check.js path/to/file.md
 node src/scripts/check.js path/to/file.md --fix
 ```
 
-`--fix` creates a `.fixed` copy: invisible characters are stripped, typographic substitutes (em dash, ellipsis, smart quotes) are replaced with keyboard equivalents. Homoglyphs are flagged with a marker for manual review.
+`--fix` creates a `.fixed` copy: invisible characters are stripped, typographic substitutes are replaced with keyboard equivalents, homoglyphs are flagged for manual review.
+
+### Why keyboard equivalents
+
+A standard keyboard (physical or mobile) produces a limited character set: hyphen `-`, straight apostrophe `'`, straight double quote `"`, three separate periods `...`. These are what humans type directly.
+
+Typographic substitutes -- em dash (U+2014), ellipsis (U+2026), smart quotes (U+201C/U+201D), typographic apostrophe (U+2019) -- appear in text that was processed by software: word processors that autocorrect, publishing pipelines, and LLMs trained on professionally edited corpora. A human writing on a phone or keyboard does not produce these characters unless autocorrect inserts them.
+
+This is the basis of the `--fix` replacements: em dash becomes ` - `, ellipsis becomes `...`, smart quotes become `"`. The result is text whose character distribution matches what a keyboard produces.
 
 ## Voice profile
 
@@ -78,9 +109,19 @@ Build a personal voice profile so Claude writes in your style, not generic profe
 
 Starts an 8-question interview. Saves results to `about-me.md`. Claude reads it before every response when voice mode is active. A starter template is in `templates/about-me.md`.
 
-## Russian language support
+## Language support
 
-The detect skill includes 110+ Russian AI stop-words, negative parallelism patterns, closing banners, and rhetorical opener traps. Load via `/avoid-ai detect` on Russian text.
+English patterns are built in. Russian is included as an additional reference: 110+ stop-words, negative parallelism constructions, closing banners, and rhetorical opener traps. The scanner automatically skips homoglyph detection on Cyrillic-primary text to avoid false positives.
+
+### Adding your language
+
+To add patterns for another language, create a reference file in `skills/avoid-ai-detect/references/` following the structure of `russian-patterns.md`. Include:
+
+- A stop-word list (vocabulary that appears at statistically elevated rates in AI-generated text in that language)
+- Structural patterns specific to that language (formulaic openers, closing phrases, rhetorical constructions)
+- Any script-specific scanner rules (e.g., which characters should be skipped for homoglyph detection)
+
+Pull requests for new language references are welcome.
 
 ## Configuration
 
@@ -110,9 +151,9 @@ The ruleset in this plugin is grounded in published research on AI writing patte
 
 Full bibliography with links: [docs/references.md](docs/references.md)
 
-## Works alongside caveman mode
+## Composability
 
-Both plugins can be active at the same time. avoid-ai controls vocabulary and structure. caveman controls response length. Combined: concise, human-sounding responses with no AI-isms.
+avoid-ai has a single responsibility: response text quality. It does not control response length, tool behavior, or any other Claude Code feature. This means it composes cleanly with other Claude Code plugins -- each plugin owns its own domain and they do not interfere.
 
 ## License
 
