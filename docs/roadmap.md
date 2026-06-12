@@ -16,9 +16,24 @@ Current architecture already covers the two checkable surfaces: per-turn reinfor
 - `strip_invisible(text)` -- strips zero-width chars and non-breaking spaces
 - `entropy_score(text)` -- paragraph length variance, sentence length variance, connector count
 
+## Multi-agent support (v2)
+
+**Current scope:** avoid-ai runs exclusively on Claude Code. The three hooks (`SessionStart`, `UserPromptSubmit`, `PreToolUse`) are Claude Code-specific APIs. Other agents (Cursor, Windsurf, Cline, Copilot, etc.) have no hook system and cannot run the avoid-ai hooks or inject context on session start.
+
+**What needs to be built:**
+
+- `src/rules/avoid-ai-activate.md` -- static ruleset in plain markdown, suitable for injection into any agent's rules directory.
+- Per-agent drop locations: `.cursor/rules/avoid-ai.mdc`, `.windsurf/rules/avoid-ai.md`, `.clinerules/avoid-ai.md`, `.github/copilot-instructions.md` (appended section), `.opencode/AGENTS.md`.
+- `bin/install.js` -- auto-detects installed agents, runs `claude plugin` for Claude Code, writes rule files for everything else. Pattern: caveman's installer architecture.
+- Curl one-liner: `curl -fsSL .../install.sh | bash` wrapping `bin/install.js`.
+
+**Limitation vs Claude Code:** Rule-file agents get P0+P1 vocabulary and formatting rules but not PreToolUse file blocking. The scanner CLI remains available standalone regardless of agent.
+
+**Why deferred:** Maintaining 5+ drop locations and testing across agents that change their config formats is significant ongoing work. Claude Code is the primary target for v1. The `claude plugin marketplace add nord-winter/avoid-ai && claude plugin install avoid-ai` path is already native and clean.
+
 ## Language-aware filtering (v2)
 
-**Current limitation:** The homoglyph detector in `check.js` flags Cyrillic characters that look like Latin letters (e.g. `а`, `е`, `о`, `р`). This is correct when the text is Latin-primary -- a Cyrillic `а` in an English word is a strong AI signal. But in Russian-primary text, all Cyrillic is legitimate and the detector produces nothing but false positives.
+**Current limitation:** The homoglyph detector in `check.js` flags Cyrillic characters that look like Latin letters (e.g. `U+0430`, `U+0435`, `U+043E`, `U+0440`). This is correct when the text is Latin-primary -- a Cyrillic `U+0430` in an English word is a strong AI signal. But in Russian-primary text, all Cyrillic is legitimate and the detector produces nothing but false positives.
 
 The same issue applies to typographic rules. En dash as a range separator (1990--2000) is normal in some style guides. Typographic quotes are correct in French and German. Context matters.
 

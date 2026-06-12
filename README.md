@@ -53,16 +53,55 @@ Entropy: connectors=2
 ## Install
 
 ```bash
+claude plugin marketplace add nord-winter/avoid-ai
+claude plugin install avoid-ai
+```
+
+Restart Claude Code. First response confirms with `avoid-ai: on`.
+
+### Customize at install time
+
+```bash
+claude plugin install avoid-ai --config defaultMode=strict
+```
+
+Or configure after install with `/plugin configure` inside Claude Code.
+
+Available options:
+
+| Option | Values | Default | Description |
+|---|---|---|---|
+| `defaultMode` | `on`, `strict` | `on` | Rule level on session start |
+
+### Try without installing (session only)
+
+```bash
+claude --plugin-url https://github.com/nord-winter/avoid-ai/archive/refs/heads/main.zip
+```
+
+Loads for one session. Nothing written to disk. Useful for testing before committing to install.
+
+### Update
+
+```bash
+claude plugin marketplace update avoid-ai
+claude plugin update avoid-ai
+```
+
+<details>
+<summary>Manual install (no Claude Code CLI)</summary>
+
+```bash
 git clone https://github.com/nord-winter/avoid-ai ~/.claude/plugins/avoid-ai
 ```
 
-Restart Claude Code. The plugin activates automatically. First response confirms with `avoid-ai: on`.
-
-Or use the install script if you cloned elsewhere:
+Or if you cloned elsewhere:
 
 ```bash
 bash install.sh
 ```
+
+</details>
 
 ---
 

@@ -3,11 +3,13 @@
 //
 // Resolution order for default mode:
 //   1. AVOID_AI_DEFAULT_MODE environment variable
-//   2. Config file defaultMode field:
+//   2. Claude Code plugin config: ~/.claude/settings.json
+//      pluginConfigs["avoid-ai@avoid-ai"].options.defaultMode
+//   3. Config file defaultMode field:
 //      - $XDG_CONFIG_HOME/avoid-ai/config.json (any platform, if set)
 //      - ~/.config/avoid-ai/config.json (macOS / Linux fallback)
 //      - %APPDATA%\avoid-ai\config.json (Windows fallback)
-//   3. 'on'
+//   4. 'on'
 
 const fs = require('fs');
 const path = require('path');
@@ -36,6 +38,22 @@ function getConfigPath() {
   return path.join(getConfigDir(), 'config.json');
 }
 
+function getPluginConfigMode() {
+  // Read from Claude Code settings.json: pluginConfigs["avoid-ai@avoid-ai"].options.defaultMode
+  // Set via: claude plugin install avoid-ai --config defaultMode=strict
+  //      or: /plugin configure (interactive)
+  try {
+    const claudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+    const settingsPath = path.join(claudeDir, 'settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const mode = settings?.pluginConfigs?.['avoid-ai@avoid-ai']?.options?.defaultMode;
+    if (mode && VALID_MODES.includes(mode.toLowerCase())) {
+      return mode.toLowerCase();
+    }
+  } catch (e) {}
+  return null;
+}
+
 function getDefaultMode() {
   // 1. Environment variable
   const envMode = process.env.AVOID_AI_DEFAULT_MODE;
@@ -43,7 +61,11 @@ function getDefaultMode() {
     return envMode.toLowerCase();
   }
 
-  // 2. Config file
+  // 2. Claude Code plugin config (set via --config or /plugin configure)
+  const pluginMode = getPluginConfigMode();
+  if (pluginMode) return pluginMode;
+
+  // 3. Config file
   try {
     const config = JSON.parse(fs.readFileSync(getConfigPath(), 'utf8'));
     if (config.defaultMode && VALID_MODES.includes(config.defaultMode.toLowerCase())) {
@@ -51,7 +73,7 @@ function getDefaultMode() {
     }
   } catch (e) {}
 
-  // 3. Default
+  // 4. Default
   return 'on';
 }
 
