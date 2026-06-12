@@ -104,6 +104,12 @@ npm test
 
 27 tests covering the scanner, prewrite hook, config module, entropy scoring, and fix mode.
 
+## Research basis
+
+The ruleset in this plugin is grounded in published research on AI writing patterns: excess vocabulary studies (Kobak et al., Science Advances 2025), stylometric authorship analysis (Dentella et al., 2025), Unicode artifact investigations (Originality.AI, OpenAI), and detection method surveys (Wu et al., Computational Linguistics 2025).
+
+Full bibliography with links: [docs/references.md](docs/references.md)
+
 ## Works alongside caveman mode
 
 Both plugins can be active at the same time. avoid-ai controls vocabulary and structure. caveman controls response length. Combined: concise, human-sounding responses with no AI-isms.
