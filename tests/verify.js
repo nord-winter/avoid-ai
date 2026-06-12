@@ -110,14 +110,32 @@ test("BOM at start -> P0", () => {
   assert(r.stdout.includes("BOM"), "expected BOM label");
 });
 
-test("--fix creates .fixed file with em dash marked", () => {
+test("--fix replaces em dash with keyboard hyphen", () => {
   const f = tmpFile("fix.md", "text \u2014 more\n");
   spawnSync("node", [CHECK, f, "--fix"], { encoding: "utf8" });
   const fixed = f.replace(".md", ".fixed.md");
   assert(fs.existsSync(fixed), ".fixed.md not created");
   const content = fs.readFileSync(fixed, "utf8");
-  assert(content.includes("[EM-DASH: FIX MANUALLY]"), "em dash not marked");
+  assert(content.includes(" - "), "expected space-hyphen-space replacement");
   assert(!content.includes("\u2014"), "literal em dash still present");
+});
+
+test("--fix replaces ellipsis with three dots", () => {
+  const f = tmpFile("fix-ellipsis.md", "wait\u2026 and see\n");
+  spawnSync("node", [CHECK, f, "--fix"], { encoding: "utf8" });
+  const fixed = f.replace(".md", ".fixed.md");
+  const content = fs.readFileSync(fixed, "utf8");
+  assert(content.includes("..."), "expected ... replacement");
+  assert(!content.includes("\u2026"), "literal ellipsis still present");
+});
+
+test("--fix strips invisible chars, preserves text", () => {
+  const f = tmpFile("fix-invis.md", "hello\u200Bworld\n");
+  spawnSync("node", [CHECK, f, "--fix"], { encoding: "utf8" });
+  const fixed = f.replace(".md", ".fixed.md");
+  const content = fs.readFileSync(fixed, "utf8");
+  assert(content.includes("helloworld"), "expected invisible char stripped");
+  assert(!content.includes("\u200B"), "zero-width space still present");
 });
 
 // ── prewrite hook tests ───────────────────────────────────────────────────

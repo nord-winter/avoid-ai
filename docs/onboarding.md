@@ -42,7 +42,7 @@ The plugin includes a CLI scanner you can run on any file:
 node src/scripts/check.js path/to/your-text.md
 ```
 
-It prints every problem with line and column number, severity (P0/P1), and the Unicode codepoint. Run with `--fix` to get a cleaned copy with invisible characters stripped and em dashes marked for manual review.
+It prints every problem with line and column number, severity (P0/P1), and the Unicode codepoint. Run with `--fix` to get a cleaned copy: invisible characters are stripped, and typographic substitutes (em dash, ellipsis, smart quotes) are replaced with their keyboard equivalents. Homoglyphs are the one exception -- they get a marker since silently substituting Cyrillic with Latin could corrupt meaning.
 
 ## How the plugin is structured
 

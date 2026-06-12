@@ -176,7 +176,7 @@ Current level: **on** (default). Switch: `/avoid-ai on|off|strict`.
 - "That last move is the contrarian one", "This is the interesting part", "That third bullet is the real story", "Here's where it gets clever" -- pointing back at your own list to label which item should matter. If it's genuinely significant, the writing should show it; the label is unearned. Cut it.
 
 **No hashtag stuffing:**
-- 6+ hashtags on a single short post. Use 2–3 specific tags max. Broad category tags (#AI #Innovation #FutureTech) do nothing for discoverability.
+- 6+ hashtags on a single short post. Use 2-3 specific tags max. Broad category tags (#AI #Innovation #FutureTech) do nothing for discoverability.
 
 **Tier-2 words -- flag when 2+ appear in the same paragraph:**
 
@@ -217,7 +217,7 @@ If the text has 5+ Tier-1 hits across 3+ categories AND uniform sentence/paragra
 - No inline-header lists: bullet starting with bold that repeats the verb -- strip the bold, write the point
 - No title case in subheadings: use sentence case
 - No numbered list inflation: "Three key takeaways" / "Five things to know" -- only when content genuinely has that many parallel items
-- Vary sentence length: mix 3–8 word punchy sentences with 20+ word flowing ones
+- Vary sentence length: mix 3-8 word punchy sentences with 20+ word flowing ones
 - Paragraph-reshuffle test: each paragraph should depend on the one before. If you could swap two paragraphs without breaking the piece, add connective tissue or restructure
 
 ---

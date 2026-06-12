@@ -140,6 +140,14 @@ if (skipHomoglyphs) {
   process.stderr.write("note: homoglyph check skipped (Cyrillic-primary text)\n");
 }
 
+// col from indexOf is a UTF-16 code-unit index.
+// For reporting we convert to codepoint index via spread (handles surrogate pairs
+// from supplementary-plane chars like emoji that appear before the match).
+// The while-loop and slice still use the raw UTF-16 col -- indexOf requires it.
+function cpCol(line, utf16idx) {
+  return [...line.slice(0, utf16idx)].length + 1;
+}
+
 if (!skipHomoglyphs) {
   lines.forEach((line, lineIdx) => {
     for (const [cyChar, latinLook] of Object.entries(HOMOGLYPHS)) {
@@ -147,7 +155,7 @@ if (!skipHomoglyphs) {
       while ((col = line.indexOf(cyChar, col)) !== -1) {
         findings.push({
           line: lineIdx + 1,
-          col:  col + 1,
+          col:  cpCol(line, col),
           severity: "P0",
           name:  "HOMOGLYPH (looks like '" + latinLook + "' U+" + cyChar.codePointAt(0).toString(16).toUpperCase().padStart(4,"0") + ")",
           code:  cyChar,
@@ -165,7 +173,7 @@ lines.forEach((line, lineIdx) => {
     while ((col = line.indexOf(code, col)) !== -1) {
       findings.push({
         line: lineIdx + 1,
-        col:  col + 1,
+        col:  cpCol(line, col),
         severity,
         name,
         code,
@@ -221,32 +229,58 @@ if (eFlags.length > 0) {
 }
 
 if (fixMode) {
-  // Markers keyed by codepoint (no literal special chars in source)
-  const MARKERS = {
-    0x2014: "[EM-DASH: FIX MANUALLY]",
-    0x2013: "[EN-DASH: FIX]",
-    0x2212: "[MINUS-SIGN: FIX]",
-    0x2026: "[ELLIPSIS: use ...]",
-    0x2019: "'",
-    0x201C: "\"",
-    0x201D: "\"",
+  // All replacements use keyboard-typeable characters only.
+  // Em dash gets space-hyphen-space (clause separator context).
+  // En dash and minus sign get plain hyphen.
+  // Typographic quotes/apostrophes get ASCII equivalents.
+  // Invisible chars are stripped entirely.
+  // Homoglyphs are the one exception -- they get a marker because
+  // silently substituting a Cyrillic char with Latin could corrupt meaning.
+  const REPLACEMENTS = {
+    0x2014: " - ",   // em dash -> space-hyphen-space
+    0x2013: "-",     // en dash -> hyphen
+    0x2212: "-",     // minus sign -> hyphen
+    0x2026: "...",   // ellipsis -> three dots
+    0x2019: "'",     // typographic apostrophe -> straight apostrophe
+    0x201C: "\"",    // left double quote -> straight double quote
+    0x201D: "\"",    // right double quote -> straight double quote
   };
   let fixed = text;
+  let strippedCount = 0;
+  let replacedCount = 0;
   CHECKS.forEach(({ code, visible }) => {
+    const cp = code.codePointAt(0);
     if (!visible) {
+      const before = fixed.length;
       fixed = fixed.split(code).join("");
+      strippedCount += (before - fixed.length);
     } else {
-      const marker = MARKERS[code.codePointAt(0)];
-      if (marker) fixed = fixed.split(code).join(marker);
+      const replacement = REPLACEMENTS[cp];
+      if (replacement) {
+        const count = fixed.split(code).length - 1;
+        if (count > 0) {
+          fixed = fixed.split(code).join(replacement);
+          replacedCount += count;
+        }
+      }
     }
   });
+  let homoglyphCount = 0;
   for (const [cyChar, latinLook] of Object.entries(HOMOGLYPHS)) {
-    fixed = fixed.split(cyChar).join("[HOMOGLYPH-" + latinLook.toUpperCase() + ": FIX]");
+    const count = fixed.split(cyChar).length - 1;
+    if (count > 0) {
+      fixed = fixed.split(cyChar).join("[HOMOGLYPH-" + latinLook.toUpperCase() + ": FIX]");
+      homoglyphCount += count;
+    }
   }
   const outPath = filePath.replace(/(\.[^.]+)$/, ".fixed$1");
   fs.writeFileSync(outPath, fixed, "utf8");
   console.log("\nFixed file: " + outPath);
-  console.log("Invisible chars stripped. Visible P1 chars marked. Homoglyphs flagged.");
+  const parts = [];
+  if (strippedCount)   parts.push(strippedCount + " invisible char(s) stripped");
+  if (replacedCount)   parts.push(replacedCount + " typographic char(s) replaced with keyboard equivalents");
+  if (homoglyphCount)  parts.push(homoglyphCount + " homoglyph(s) marked (review manually)");
+  console.log(parts.join(", ") + ".");
 }
 
 process.exit(findings.length > 0 ? 1 : 0);

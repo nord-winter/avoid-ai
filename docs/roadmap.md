@@ -1,20 +1,20 @@
 # Roadmap
 
-## MCP server: unicode-inspect
+## MCP server: unicode-inspect (deferred)
 
-An MCP tool that Claude can call inline during generation to inspect text for AI-specific Unicode patterns.
+An MCP server that would expose the scanner as a callable tool.
 
-**Why:** `check.js` works as a CLI after the fact. An MCP tool lets Claude self-check output in real time, before responding, not just when writing files.
+**Why deferred:** The original motivation was to let Claude self-check its own chat responses before sending. That requires a PostResponse or PreResponse hook -- neither exists in Claude Code today. Without such a hook, the MCP would fire only when Claude voluntarily decides to call it, which is not a reliable quality gate.
 
-**Tools to expose:**
+Current architecture already covers the two checkable surfaces: per-turn reinforcement (mode-tracker injects the ruleset on every message) and PreToolUse file blocking (prewrite.js blocks Write/Edit containing forbidden chars). Chat response text is not a tool call and has no interception point in the current API.
 
-- `inspect_unicode(text)` -- returns list of findings: char, codepoint, line, col, severity, fix hint
-- `strip_invisible(text)` -- strips zero-width chars and non-breaking spaces, returns clean text
-- `entropy_score(text)` -- returns paragraph length variance, sentence length variance, connector frequency. Low score = high AI signal.
+**When worth building:** If Claude Code adds a PostResponse hook, an MCP with `inspect_unicode(text)` and `entropy_score(text)` would allow a mechanical check on every response before it reaches the user. Until then, the MCP adds infrastructure without changing behavior.
 
-**Stack:** Node.js MCP server using the `@modelcontextprotocol/sdk` package.
+**Tools to expose when the time comes:**
 
-**Integration:** Add as a tool in `plugin.json` so avoid-ai mode can call it as part of the PreToolUse or PostToolUse pipeline.
+- `inspect_unicode(text)` -- list of findings: char, codepoint, line, col, severity, fix hint
+- `strip_invisible(text)` -- strips zero-width chars and non-breaking spaces
+- `entropy_score(text)` -- paragraph length variance, sentence length variance, connector count
 
 ## Language-aware filtering (v2)
 

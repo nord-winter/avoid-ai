@@ -14,17 +14,17 @@ Three enforcement layers:
 
 ## Install
 
-```
-cp -r avoid-ai ~/.claude/plugins/
-```
-
-Or clone directly:
-
-```
-git clone https://github.com/YOUR_USERNAME/avoid-ai ~/.claude/plugins/avoid-ai
+```bash
+git clone https://github.com/nord-winter/avoid-ai ~/.claude/plugins/avoid-ai
 ```
 
-Restart Claude Code. The plugin activates automatically.
+Restart Claude Code. The plugin activates automatically. First response confirms with `avoid-ai: on`.
+
+Or use the install script if you cloned elsewhere:
+
+```bash
+bash install.sh
+```
 
 ## Commands
 
@@ -59,14 +59,14 @@ Uniform paragraph/sentence length, synonym cycling, compulsive rule of three, co
 
 ## Scanner CLI
 
-Check any file for em dashes and invisible Unicode:
+Check any file for forbidden characters and AI structural patterns:
 
-```
+```bash
 node src/scripts/check.js path/to/file.md
 node src/scripts/check.js path/to/file.md --fix
 ```
 
-`--fix` creates a `.fixed` copy with invisible chars stripped and em dashes marked `[EM-DASH: FIX MANUALLY]`.
+`--fix` creates a `.fixed` copy: invisible characters are stripped, typographic substitutes (em dash, ellipsis, smart quotes) are replaced with keyboard equivalents. Homoglyphs are flagged with a marker for manual review.
 
 ## Voice profile
 
@@ -76,7 +76,7 @@ Build a personal voice profile so Claude writes in your style, not generic profe
 /avoid-ai-voice build
 ```
 
-Starts an 8-question interview. Saves results to `about-me.md`. Claude reads it before every response when voice mode is active.
+Starts an 8-question interview. Saves results to `about-me.md`. Claude reads it before every response when voice mode is active. A starter template is in `templates/about-me.md`.
 
 ## Russian language support
 
@@ -86,7 +86,7 @@ The detect skill includes 110+ Russian AI stop-words, negative parallelism patte
 
 Default mode on startup: `on`. To change, set env var:
 
-```
+```bash
 export AVOID_AI_DEFAULT_MODE=strict
 ```
 
@@ -98,11 +98,11 @@ Or create `~/.config/avoid-ai/config.json`:
 
 ## Tests
 
-```
+```bash
 npm test
 ```
 
-17 tests covering the scanner, prewrite hook, and config module.
+27 tests covering the scanner, prewrite hook, config module, entropy scoring, and fix mode.
 
 ## Works alongside caveman mode
 
@@ -111,9 +111,3 @@ Both plugins can be active at the same time. avoid-ai controls vocabulary and st
 ## License
 
 MIT
-
-## Roadmap
-
-### MCP server (planned)
-
-Programmatic Unicode scanner as an MCP tool. Decodes and inspects text for AI-specific characters: em dashes, invisible Unicode watermarks (U+200B, U+FEFF, U+00AD, non-breaking spaces), and structural entropy signals. Exposes as a tool Claude can call inline during generation, not just as a CLI script.
