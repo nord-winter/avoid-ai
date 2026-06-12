@@ -1,6 +1,19 @@
+<div align="center">
+
 # avoid-ai
 
-Claude Code plugin that applies a self-editing pass to every Claude response. Removes vocabulary, formatting, and structural patterns statistically associated with AI-generated text. Active on every session. No config needed.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D14-brightgreen)](https://nodejs.org)
+[![Tests](https://img.shields.io/badge/tests-27%20passing-brightgreen)](tests/verify.js)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-yellow?style=flat-square)](https://buymeacoffee.com/nord.winter)
+
+**Claude Code plugin that removes AI writing patterns from every response.**
+
+No config. No commands needed. Runs silently on every session.
+
+</div>
+
+---
 
 ## Features
 
@@ -35,6 +48,8 @@ Entropy: connectors=2
 
 `--fix` creates a clean copy: invisible characters stripped, typographic substitutes replaced with keyboard equivalents (em dash becomes ` - `, ellipsis becomes `...`, smart quotes become straight quotes).
 
+---
+
 ## Install
 
 ```bash
@@ -49,6 +64,8 @@ Or use the install script if you cloned elsewhere:
 bash install.sh
 ```
 
+---
+
 ## Commands
 
 | Command | Effect |
@@ -62,23 +79,27 @@ bash install.sh
 | `/avoid-ai-voice build` | Interview to build voice profile |
 | `/avoid-ai help` | Quick reference card |
 
+---
+
 ## Rule levels
 
 **on** (default): P0 + P1. Credibility killers and obvious AI smell.
 
 **strict**: P0 + P1 + P2. Full audit, including uniform paragraph length, copula avoidance, transition phrases.
 
-### P0 - Credibility killers
+### P0 -- Credibility killers
 
 Chatbot artifacts ("Great question!", "I hope this helps!"), cutoff disclaimers, vague attributions without sources, sycophancy, acknowledgment loops.
 
-### P1 - Obvious AI smell
+### P1 -- Obvious AI smell
 
 Tier-1 words (delve, leverage, robust, seamless, meticulous, utilize, holistic, actionable, impactful, paradigm, embark, showcase, intricate, ever-evolving, cutting-edge, game-changer, deep dive, unpack, and 50+ more), em dashes, bold overuse, emoji in headers, stacked hedges, "Let's explore", "In today's X", generic closers, reasoning chain artifacts, infomercial hooks, invisible Unicode watermarks.
 
-### P2 - Stylistic polish (strict only)
+### P2 -- Stylistic polish (strict only)
 
 Uniform paragraph/sentence length, synonym cycling, compulsive rule of three, copula avoidance, transition boilerplate.
+
+---
 
 ## Scanner CLI
 
@@ -95,9 +116,11 @@ node src/scripts/check.js path/to/file.md --fix
 
 A standard keyboard (physical or mobile) produces a limited character set: hyphen `-`, straight apostrophe `'`, straight double quote `"`, three separate periods `...`. These are what humans type directly.
 
-Typographic substitutes -- em dash (U+2014), ellipsis (U+2026), smart quotes (U+201C/U+201D), typographic apostrophe (U+2019) -- appear in text that was processed by software: word processors that autocorrect, publishing pipelines, and LLMs trained on professionally edited corpora. A human writing on a phone or keyboard does not produce these characters unless autocorrect inserts them.
+Typographic substitutes -- em dash (U+2014), ellipsis (U+2026), smart quotes (U+201C/U+201D), typographic apostrophe (U+2019) -- appear in text processed by software: word processors that autocorrect, publishing pipelines, and LLMs trained on professionally edited corpora. A human writing on a phone or keyboard does not produce these characters unless autocorrect inserts them.
 
 This is the basis of the `--fix` replacements: em dash becomes ` - `, ellipsis becomes `...`, smart quotes become `"`. The result is text whose character distribution matches what a keyboard produces.
+
+---
 
 ## Voice profile
 
@@ -108,6 +131,8 @@ Build a personal voice profile so Claude writes in your style, not generic profe
 ```
 
 Starts an 8-question interview. Saves results to `about-me.md`. Claude reads it before every response when voice mode is active. A starter template is in `templates/about-me.md`.
+
+---
 
 ## Language support
 
@@ -123,6 +148,8 @@ To add patterns for another language, create a reference file in `skills/avoid-a
 
 Pull requests for new language references are welcome.
 
+---
+
 ## Configuration
 
 Default mode on startup: `on`. To change, set env var:
@@ -137,6 +164,8 @@ Or create `~/.config/avoid-ai/config.json`:
 { "defaultMode": "strict" }
 ```
 
+---
+
 ## Tests
 
 ```bash
@@ -145,16 +174,30 @@ npm test
 
 27 tests covering the scanner, prewrite hook, config module, entropy scoring, and fix mode.
 
+---
+
 ## Research basis
 
 The ruleset in this plugin is grounded in published research on AI writing patterns: excess vocabulary studies (Kobak et al., Science Advances 2025), stylometric authorship analysis (Dentella et al., 2025), Unicode artifact investigations (Originality.AI, OpenAI), and detection method surveys (Wu et al., Computational Linguistics 2025).
 
 Full bibliography with links: [docs/references.md](docs/references.md)
 
+---
+
 ## Composability
 
 avoid-ai has a single responsibility: response text quality. It does not control response length, tool behavior, or any other Claude Code feature. This means it composes cleanly with other Claude Code plugins -- each plugin owns its own domain and they do not interfere.
 
+---
+
 ## License
 
 MIT
+
+---
+
+<div align="center">
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-yellow?style=for-the-badge)](https://buymeacoffee.com/nord.winter)
+
+</div>
