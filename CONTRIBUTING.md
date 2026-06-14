@@ -64,7 +64,7 @@ Column numbers are codepoint-based, not UTF-16 unit-based. `cpCol()` handles sup
 
 ## Adding a language
 
-Create `skills/avoid-ai-detect/references/<lang-code>.md` following the structure of `ru.md`. Include:
+Create `skills/avoid-ai-detect/references/<lang-code>.md` using `references/TEMPLATE.md` as the starting point. `ru.md` is an existing example. Include:
 
 1. A stop-word list - vocabulary that appears at elevated rates in AI-generated text in that language
 2. Structural patterns specific to that language (formulaic openers, closing phrases, rhetorical constructions)

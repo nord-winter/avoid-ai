@@ -180,7 +180,7 @@ English patterns are built in. Russian is included as an additional reference: 1
 
 ### Adding your language
 
-To add patterns for another language, create a reference file in `skills/avoid-ai-detect/references/` following the structure of `ru.md`. Include:
+To add patterns for another language, copy `skills/avoid-ai-detect/references/TEMPLATE.md` to `<lang-code>.md` in the same directory. `ru.md` is a complete example. Include:
 
 - A stop-word list (vocabulary that appears at statistically elevated rates in AI-generated text in that language)
 - Structural patterns specific to that language (formulaic openers, closing phrases, rhetorical constructions)
