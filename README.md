@@ -180,7 +180,7 @@ English patterns are built in. Russian is included as an additional reference: 1
 
 ### Adding your language
 
-To add patterns for another language, create a reference file in `skills/avoid-ai-detect/references/` following the structure of `russian-patterns.md`. Include:
+To add patterns for another language, create a reference file in `skills/avoid-ai-detect/references/` following the structure of `ru.md`. Include:
 
 - A stop-word list (vocabulary that appears at statistically elevated rates in AI-generated text in that language)
 - Structural patterns specific to that language (formulaic openers, closing phrases, rhetorical constructions)
@@ -233,6 +233,12 @@ avoid-ai has a single responsibility: response text quality. It does not control
 ## License
 
 MIT
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nord-winter/avoid-ai&type=Date)](https://star-history.com/#nord-winter/avoid-ai&Date)
 
 ---
 

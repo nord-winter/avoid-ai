@@ -138,4 +138,4 @@ harness, navigate, foster, elevate, unleash, streamline, empower, bolster, spear
 
 ## Russian-language text
 
-For Russian text, load `references/russian-patterns.md`. It contains 110+ Russian stop-words, Russian-specific constructions (negative parallelism, closing banners, rhetorical openers), and output format guidance. Apply the same P0/P1/P2 severity tiers.
+For Russian text, load `references/ru.md`. It contains 110+ Russian stop-words, Russian-specific constructions (negative parallelism, closing banners, rhetorical openers), and output format guidance. Apply the same P0/P1/P2 severity tiers.
