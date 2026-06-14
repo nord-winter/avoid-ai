@@ -57,7 +57,7 @@ Current level: **on** (default). Switch: `/avoid-ai on|off|strict`.
 - **Soft hyphens** (U+00AD): Invisible unless the word wraps. AI uses these more than human writers. Flag in plain-text output.
 - **Invisible math operators** (U+2061 function application, U+2062 invisible times, U+2064 invisible plus): Near-zero legitimate use outside math markup. Flag immediately.
 - **Mongolian vowel separator** (U+180E): Zero legitimate use in English or Russian text. Guaranteed machine origin.
-- **Homoglyphs**: Cyrillic or Greek characters (А, В, С, Е, О, Р, Т, Х, о, р, с, х, у, etc.) substituted for visually identical Latin letters. Undetectable by eye, detectable by codepoint. Run `node src/scripts/check.js` to scan.
+- **Homoglyphs**: Cyrillic or Greek characters (U+0410, U+0412, U+0421, U+0415, U+041E, U+0420, U+0422, U+0425, U+043E, U+0440, U+0441, U+0445, U+0443, etc.) substituted for visually identical Latin letters. Undetectable by eye, detectable by codepoint. Run `node src/scripts/check.js` to scan.
 - **Fix**: Run a Unicode strip pass. Replace non-breaking spaces with regular spaces. Remove zero-width characters entirely. If text was copy-pasted from a chat UI, assume hidden characters are present until proven otherwise.
 
 **Tier-1 words -- never use:**

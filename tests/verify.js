@@ -116,7 +116,7 @@ test("--fix replaces em dash with keyboard hyphen", () => {
   const fixed = f.replace(".md", ".fixed.md");
   assert(fs.existsSync(fixed), ".fixed.md not created");
   const content = fs.readFileSync(fixed, "utf8");
-  assert(content.includes(" - "), "expected space-hyphen-space replacement");
+  assert(content.includes("text - more"), "expected hyphen replacement");
   assert(!content.includes("\u2014"), "literal em dash still present");
 });
 

@@ -43,7 +43,9 @@ function stripMarkdownBlocks(src) {
     .replace(/^[ \t]*\|.*\|[ \t]*$/gm, "")  // table rows (| col | col |)
     .replace(/^[ \t]*>.*$/gm, "")            // blockquotes
     .replace(/^[ \t]{4,}.+$/gm, "")          // indented code (4+ spaces)
-    .replace(/`[^`]+`/g, "");               // inline code
+    .replace(/`[^`]+`/g, "")                // inline code
+    .replace(/^[ \t]*[-*+] .+$/gm, "")      // bullet list items (connectors in lists = not prose)
+    .replace(/^[ \t]*\d+\. .+$/gm, "");     // numbered list items
 }
 
 // Entropy scoring: detects structural uniformity typical of AI text
@@ -199,9 +201,14 @@ lines.forEach((line, lineIdx) => {
   });
 });
 
-// Run entropy check regardless of Unicode findings
-const eScore = entropyScore(text);
-const eFlags = entropyFlags(eScore);
+// Entropy check: prose files only. Code files contain connector words in string
+// literals, variable names, and comments -- entropy scoring produces false positives.
+const PROSE_EXTENSIONS = new Set([".md", ".txt", ".rst", ".html", ".htm"]);
+const fileExt = path.extname(filePath).toLowerCase();
+const runEntropy = PROSE_EXTENSIONS.has(fileExt);
+
+const eScore = runEntropy ? entropyScore(text) : { paraVar: 0, sentVar: 0, connectorCount: 0, paraCount: 0, sentCount: 0 };
+const eFlags = runEntropy ? entropyFlags(eScore) : [];
 
 if (findings.length === 0 && eFlags.length === 0) {
   console.log("OK: no forbidden characters in", path.basename(filePath));
@@ -245,16 +252,16 @@ if (eFlags.length > 0) {
 
 if (fixMode) {
   // All replacements use keyboard-typeable characters only.
-  // Em dash gets space-hyphen-space (clause separator context).
+  // Em dash, en dash, and minus sign all become plain hyphen (-).
   // En dash and minus sign get plain hyphen.
   // Typographic quotes/apostrophes get ASCII equivalents.
   // Invisible chars are stripped entirely.
   // Homoglyphs are the one exception -- they get a marker because
   // silently substituting a Cyrillic char with Latin could corrupt meaning.
   const REPLACEMENTS = {
-    0x2014: " - ",   // em dash -> space-hyphen-space
-    0x2013: "-",     // en dash -> hyphen
-    0x2212: "-",     // minus sign -> hyphen
+    0x2014: "-",     // em dash -> hyphen (keyboard char)
+    0x2013: "-",     // en dash -> hyphen (keyboard char)
+    0x2212: "-",     // minus sign -> hyphen (keyboard char)
     0x2026: "...",   // ellipsis -> three dots
     0x2019: "'",     // typographic apostrophe -> straight apostrophe
     0x201C: "\"",    // left double quote -> straight double quote

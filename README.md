@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D14-brightgreen)](https://nodejs.org)
 [![Tests](https://img.shields.io/badge/tests-27%20passing-brightgreen)](tests/verify.js)
+[![GitHub Stars](https://img.shields.io/github/stars/nord-winter/avoid-ai?style=flat&color=yellow)](https://github.com/nord-winter/avoid-ai/stargazers)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-yellow?style=flat-square)](https://buymeacoffee.com/nord.winter)
 
 **Claude Code plugin that removes AI writing patterns from every response.**
@@ -46,7 +47,7 @@ Summary: 2 P0 (invisible / homoglyphs)  1 P1 (typographic substitutes)
 Entropy: connectors=2
 ```
 
-`--fix` creates a clean copy: invisible characters stripped, typographic substitutes replaced with keyboard equivalents (em dash becomes ` - `, ellipsis becomes `...`, smart quotes become straight quotes).
+`--fix` creates a clean copy: invisible characters stripped, typographic substitutes replaced with keyboard equivalents (em dash and en dash become `-`, ellipsis becomes `...`, smart quotes become straight quotes).
 
 ---
 
@@ -157,7 +158,7 @@ A standard keyboard (physical or mobile) produces a limited character set: hyphe
 
 Typographic substitutes -- em dash (U+2014), ellipsis (U+2026), smart quotes (U+201C/U+201D), typographic apostrophe (U+2019) -- appear in text processed by software: word processors that autocorrect, publishing pipelines, and LLMs trained on professionally edited corpora. A human writing on a phone or keyboard does not produce these characters unless autocorrect inserts them.
 
-This is the basis of the `--fix` replacements: em dash becomes ` - `, ellipsis becomes `...`, smart quotes become `"`. The result is text whose character distribution matches what a keyboard produces.
+This is the basis of the `--fix` replacements: em dash and en dash become `-`, ellipsis becomes `...`, smart quotes become `"`. The result is text whose character distribution matches what a keyboard produces.
 
 ---
 

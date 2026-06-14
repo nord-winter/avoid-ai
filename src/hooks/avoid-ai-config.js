@@ -165,8 +165,9 @@ function getCompactRules(mode) {
     'VOCAB: No Tier-1 words: delve, leverage, robust, seamless, holistic, pivotal, meticulous, ' +
     'utilize, actionable, impactful, paradigm, embark, showcase, intricate, ever-evolving, ' +
     'cutting-edge, comprehensive, game-changer, deep dive, unpack, tapestry, realm, best practices.\n' +
-    'FORMAT: No em dash (U+2014) or en dash (U+2013). No emoji in headers/bullets. ' +
-    'No bold overuse. No bullets where prose works. No backticks on non-code words.\n' +
+    'FORMAT: No em dash (U+2014), no en dash (U+2013), no double hyphen as separator. ' +
+    'Use single hyphen `-` where a separator is needed. ' +
+    'No emoji in headers/bullets. No bold overuse. No bullets where prose works. No backticks on non-code words.\n' +
     'PATTERNS: No "it\'s worth noting", "let\'s explore", "in today\'s X", ' +
     '"Great question!", stacked hedges ("could potentially"), "Let\'s" openers, ' +
     'generic closers ("the future looks bright").\n' +

@@ -48,6 +48,7 @@ Audit the provided text for AI writing patterns. Do not apply to Claude's own re
 - Formulaic openings ("In the rapidly evolving world of...")
 - Bold overuse (more than one bolded phrase per major section)
 - Em dash (U+2014) and en dash (U+2013): absolute zero. Flag in prose and markup. No exceptions.
+- Double hyphen `--` used as em dash substitute: P1. Typewriter convention, not a keyboard character. Replace with `,` or rewrite the clause as two sentences.
 - Ellipsis character (U+2026): flag as P1. Should be three separate dots.
 - Typographic apostrophe (U+2019) and curly quotes (U+201C, U+201D): flag as P1. Should be straight ASCII versions.
 - Social endorsement closers ("This one is worth your time:", "Thank me later")
@@ -69,10 +70,14 @@ Audit the provided text for AI writing patterns. Do not apply to Claude's own re
 
 ## Output format (detect mode)
 
+CRITICAL: Claude must never use the em dash character (U+2014) in its own audit output. The prewrite hook does not intercept chat responses -- self-discipline is required. Use a single hyphen as separator: ` - `.
+
 For each finding:
 ```
-[P0/P1/P2] "[quoted text]" -- rule violated. Suggested fix.
+[P0/P1/P2] "[quoted text]" - rule violated. Suggested fix.
 ```
+
+The separator above is a single hyphen. Never use em dash or double hyphen in output.
 
 Then: severity summary -- count of P0, P1, P2 findings.
 
@@ -80,9 +85,48 @@ If 5+ P1 hits across 3+ categories with uniform sentence/paragraph length: recom
 
 ## Output format (rewrite mode)
 
-1. Audit: list findings as above
-2. Rewrite: clean version with all findings resolved
-3. Diff summary: what changed and why (one line per category fixed)
+**Section 1 - Audit** (same as detect mode, listed findings with severity tags)
+
+**Section 2 - Rewrite** (fenced code block, ALWAYS):
+
+The rewrite MUST be inside a markdown fenced block so the user gets a copy button and the exact characters are preserved. Never dump rewrite as prose outside a code block.
+
+````
+Rewrite:
+
+```
+[clean text here, verbatim, with all original markdown intact:
+ backticks, tables, headers, code spans -- all preserved exactly as they should appear]
+```
+````
+
+Rules for the fenced block:
+- Preserve all inline code (`backticks`) as-is
+- Preserve markdown tables with correct pipe alignment
+- Do NOT add any explanatory prose inside the block
+- One blank line between the label `Rewrite:` and the opening fence
+
+**Section 3 - Changes** (outside the block, one line per fix category):
+
+```
+Changes: [what was fixed] -> [what replaced it]. [what was fixed] -> [what replaced it].
+```
+
+Example of correct full output:
+
+---
+
+Audit:
+
+[P1] "The tool lied to the browser: reported 768px, container is 1200px. On DPR=1 the browser picks `768w` and stretches - blurry." - double hyphen `--` used as em dash. Rewrite as two sentences.
+
+Rewrite:
+
+```
+The tool lied to the browser: reported 768px, container is 1200px. On DPR=1 the browser picks `768w` and stretches it. Result: blurry.
+```
+
+Changes: `--` removed, clause split into two sentences.
 
 ## Tier-1 word reference (always replace)
 
